@@ -26,6 +26,8 @@ yarn-error.log*
 .env*.local
 .env
 .env.example
+# Allow production env file for Vercel
+!.env.production
 
 # Vercel
 .vercel
