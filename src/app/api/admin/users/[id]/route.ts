@@ -97,7 +97,7 @@ export async function GET(
                 order: {
                   select: {
                     id: true,
-                    total: true
+                    totalAmount: true
                   }
                 }
               }
@@ -113,7 +113,7 @@ export async function GET(
           select: {
             id: true,
             status: true,
-            total: true,
+            totalAmount: true,
             createdAt: true
           }
         },

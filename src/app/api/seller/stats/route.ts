@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
           product: { sellerId: sellerProfile.id },
           order: { status: 'DELIVERED' }
         },
-        _sum: { price: true }
+        _sum: { totalPrice: true }
       }),
 
       // This month revenue
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
             createdAt: { gte: startOfMonth }
           }
         },
-        _sum: { price: true }
+        _sum: { totalPrice: true }
       }),
 
       // Last month revenue
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        _sum: { price: true }
+        _sum: { totalPrice: true }
       }),
 
       // Total reviews count
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
     // Get total unique orders (not just order items)
     const totalOrders = await prisma.order.count({
       where: {
-        items: {
+        orderItems: {
           some: {
             product: { sellerId: sellerProfile.id }
           }
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
 
     const thisMonthOrders_count = await prisma.order.count({
       where: {
-        items: {
+        orderItems: {
           some: {
             product: { sellerId: sellerProfile.id }
           }
@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
 
     const lastMonthOrders_count = await prisma.order.count({
       where: {
-        items: {
+        orderItems: {
           some: {
             product: { sellerId: sellerProfile.id }
           }

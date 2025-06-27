@@ -44,7 +44,7 @@ export async function PATCH(
     const existingOrder = await prisma.order.findFirst({
       where: {
         id: params.id,
-        items: {
+        orderItems: {
           some: {
             product: {
               sellerId: sellerProfile.id
@@ -53,7 +53,7 @@ export async function PATCH(
         }
       },
       include: {
-        items: {
+        orderItems: {
           where: {
             product: {
               sellerId: sellerProfile.id
@@ -104,7 +104,7 @@ export async function PATCH(
             email: true
           }
         },
-        items: {
+        orderItems: {
           where: {
             product: {
               sellerId: sellerProfile.id

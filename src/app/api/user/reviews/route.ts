@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     const userOrder = await prisma.order.findFirst({
       where: {
         buyerId: session.user.id,
-        items: {
+        orderItems: {
           some: {
             productId: validatedData.productId
           }

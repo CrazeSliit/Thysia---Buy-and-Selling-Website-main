@@ -35,7 +35,7 @@ async function getActiveDelivery(userId: string) {
                 email: true
               }
             },
-            items: {
+            orderItems: {
               include: {
                 product: {
                   select: {
@@ -99,7 +99,7 @@ export default async function ActiveDelivery({ userId }: ActiveDeliveryProps) {
   }
 
   const status = statusConfig[delivery.status as keyof typeof statusConfig]
-  const firstItem = delivery.order.items[0]
+  const firstItem = delivery.order.orderItems[0]
 
   return (
     <div className="p-6">
@@ -131,9 +131,9 @@ export default async function ActiveDelivery({ userId }: ActiveDeliveryProps) {
               <p className="text-xs text-secondary-500">
                 From: {firstItem.product.seller.businessName || 'Unknown Seller'}
               </p>
-              {delivery.order.items.length > 1 && (
+              {delivery.order.orderItems.length > 1 && (
                 <p className="text-xs text-secondary-500">
-                  +{delivery.order.items.length - 1} more item{delivery.order.items.length - 1 !== 1 ? 's' : ''}
+                  +{delivery.order.orderItems.length - 1} more item{delivery.order.orderItems.length - 1 !== 1 ? 's' : ''}
                 </p>
               )}
             </div>

@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       // Total revenue (sum of all completed orders)
       prisma.order.aggregate({
         where: { status: 'DELIVERED' },
-        _sum: { total: true }
+        _sum: { totalAmount: true }
       }),
       
       // Pending reviews count (mock for now since we don't have reviews table)
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       totalUsers,
       totalProducts,
       totalOrders,
-      totalRevenue: totalRevenue._sum.total || 0,
+      totalRevenue: totalRevenue._sum.totalAmount || 0,
       pendingReviews,
       activeDisputes,
       onlineUsers,
