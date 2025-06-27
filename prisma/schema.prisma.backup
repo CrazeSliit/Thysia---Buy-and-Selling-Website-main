@@ -1,0 +1,355 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// --- Auth Models (from NextAuth.js setup) ---
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Core User Model ---
+model User {
+  id             String        @id @default(cuid())
+  name           String?
+  email          String        @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?       // For credential provider
+  role           String        @default("BUYER") // BUYER, SELLER, DRIVER, ADMIN
+  isActive       Boolean       @default(true) // For admin to enable/disable users
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+
+  buyerProfile   BuyerProfile?
+  sellerProfile  SellerProfile?
+  driverProfile  DriverProfile?
+
+  addresses      Address[]
+  carts          CartItem[]
+  ordersAsBuyer  Order[]       @relation("BuyerOrders")
+  reviews        Review[]
+  messagesSent   Message[]     @relation("SenderMessages")
+  messagesReceived Message[]   @relation("ReceiverMessages")
+  notifications  Notification[]
+  wishlistItems  WishlistItem[]
+  driverRatings  DriverRating[]
+  adminRefunds   Refund[]      @relation("AdminRefunds")
+  adminLogs      AdminLog[]
+}
+
+// --- Role Specific Profiles ---
+model BuyerProfile {
+  id        String @id @default(cuid())
+  userId    String @unique
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SellerProfile {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeName     String    @unique
+  storeDescription String?
+  storeImage    String?
+  isVerified    Boolean   @default(false) // Admin verification
+  commissionRate Float    @default(0.05) // 5% default commission
+  products      Product[]
+  ordersAsSeller Order[]  @relation("SellerOrders") // Orders processed by this seller
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model DriverProfile {
+  id            String          @id @default(cuid())
+  userId        String          @unique
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  licenseNumber String?         @unique
+  vehicleInfo   String?
+  isAvailable   Boolean         @default(true)
+  deliveryFee   Float           @default(0)
+  totalEarnings Float           @default(0)
+  shipments     Shipment[]
+  ratings       DriverRating[]  @relation("DriverRatings")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+// --- Product & Category Models ---
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique // For friendly URLs
+  imageUrl  String?
+  description String?
+  isActive  Boolean   @default(true)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id              String        @id @default(cuid())
+  name            String
+  slug            String        @unique // For friendly URLs
+  description     String
+  price           Float
+  originalPrice   Float?        // For showing discounts
+  stock           Int
+  imageUrl        String        // JSON string array of image URLs
+  isFeatured      Boolean       @default(false)
+  isActive        Boolean       @default(true) // Seller can toggle, Admin can override
+  weight          Float?        // For shipping calculations
+  dimensions      String?       // LxWxH for shipping
+  sku             String?       @unique // Stock Keeping Unit
+  
+  sellerId        String
+  seller          SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  categoryId      String
+  category        Category      @relation(fields: [categoryId], references: [id])
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  reviews         Review[]
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  wishlistItems   WishlistItem[]
+}
+
+// --- Shopping & Order Models ---
+model CartItem {
+  id        String   @id @default(cuid())
+  buyerId   String
+  buyer     User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([buyerId, productId]) // A user can only have one of each product in cart
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  orderNumber   String        @unique @default(cuid()) // Human-readable order number
+  buyerId       String
+  buyer         User          @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerId      String        // This order is primarily from this seller
+  seller        SellerProfile @relation("SellerOrders", fields: [sellerId], references: [id])
+  
+  totalAmount   Float
+  subtotal      Float
+  shippingFee   Float         @default(0)
+  tax           Float         @default(0)
+  
+  shippingAddressId String
+  shippingAddress Address       @relation(fields: [shippingAddressId], references: [id])
+  
+  orderStatus   String        @default("PENDING") // PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED, RETURN_REQUEST, RETURNED
+  paymentStatus String        @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED
+  paymentIntentId String?       @unique // Stripe payment intent ID
+  
+  notes         String? // Buyer notes
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  orderItems    OrderItem[]
+  shipment      Shipment?
+  refunds       Refund[]
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float    // Price at the time of purchase
+  createdAt DateTime @default(now())
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName  String
+  street    String
+  city      String
+  state     String?
+  zipCode   String
+  country   String
+  phoneNumber String?
+  isDefault Boolean  @default(false)
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Shipment {
+  id             String         @id @default(cuid())
+  orderId        String         @unique
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driverId       String?        // Can be null initially if no driver assigned
+  driver         DriverProfile? @relation(fields: [driverId], references: [id])
+  trackingNumber String         @unique @default(cuid())
+  shipmentStatus String         @default("PENDING_PICKUP") // PENDING_PICKUP, OUT_FOR_DELIVERY, DELIVERED, FAILED_DELIVERY, RETURNED_TO_SENDER
+  pickupDate     DateTime?
+  deliveryDate   DateTime?
+  expectedDelivery DateTime?
+  pickupAddress  String?
+  deliveryAddress String?
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Refund {
+  id        String       @id @default(cuid())
+  orderId   String
+  order     Order        @relation(fields: [orderId], references: [id])
+  amount    Float
+  reason    String
+  status    String       @default("PENDING") // PENDING, APPROVED, REJECTED, COMPLETED
+  adminId   String?      // Admin who approved/rejected
+  admin     User?        @relation("AdminRefunds", fields: [adminId], references: [id])
+  refundedAt DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+// --- Review & Rating Models ---
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  buyerId   String
+  buyer     User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  rating    Int      // 1-5 rating (validated in app)
+  comment   String?
+  isVerified Boolean @default(false) // If buyer actually purchased the product
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, buyerId]) // A user can only review a product once
+}
+
+model DriverRating {
+  id        String   @id @default(cuid())
+  driverId  String
+  driver    DriverProfile @relation("DriverRatings", fields: [driverId], references: [id], onDelete: Cascade)
+  buyerId   String
+  buyer     User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  orderId   String?  // Link to specific order/delivery
+  rating    Int      // 1-5 rating (validated in app)
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([driverId, buyerId, orderId]) // One rating per driver per order
+}
+
+// --- Communication & Notification Models ---
+model Message {
+  id        String   @id @default(cuid())
+  senderId  String
+  sender    User     @relation("SenderMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver  User     @relation("ReceiverMessages", fields: [receiverId], references: [id])
+  subject   String?
+  content   String
+  isRead    Boolean  @default(false)
+  orderId   String?  // Optional: link to specific order
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String         // ORDER_UPDATE, NEW_MESSAGE, PRODUCT_UPDATE, PAYMENT_CONFIRMATION, etc.
+  title     String
+  message   String
+  link      String?        // URL to navigate to when clicked
+  isRead    Boolean        @default(false)
+  createdAt DateTime       @default(now())
+}
+
+// --- Other Utility Models ---
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId]) // A user can only have one of each product in wishlist
+}
+
+model AdminLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id])
+  action    String // e.g., "Deleted Product ABC", "Verified Seller XYZ"
+  details   String?  // JSON string for additional details
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+// --- System Settings & Configuration ---
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
