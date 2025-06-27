@@ -5,13 +5,15 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
+    "postbuild": "prisma db push --accept-data-loss || true",
     "start": "next start",
     "lint": "next lint",
     "devtools": "react-devtools",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
-    "test:connection": "node test-db-connection.js"
+    "test:connection": "node test-db-connection.js",
+    "vercel-build": "node scripts/vercel-build.js"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
