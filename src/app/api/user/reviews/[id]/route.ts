@@ -22,10 +22,20 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Get the buyer profile for the current user
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { buyerProfile: true }
+    })
+
+    if (!user?.buyerProfile) {
+      return NextResponse.json({ error: 'Buyer profile not found' }, { status: 404 })
+    }
+
     const review = await prisma.review.findFirst({
       where: {
         id: params.id,
-        userId: session.user.id
+        buyerId: user.buyerProfile.id
       },
       include: {
         product: {
@@ -73,11 +83,21 @@ export async function PUT(
     const body = await request.json()
     const validatedData = reviewUpdateSchema.parse(body)
 
+    // Get the buyer profile for the current user
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { buyerProfile: true }
+    })
+
+    if (!user?.buyerProfile) {
+      return NextResponse.json({ error: 'Buyer profile not found' }, { status: 404 })
+    }
+
     // Check if review exists and belongs to user
     const existingReview = await prisma.review.findFirst({
       where: {
         id: params.id,
-        userId: session.user.id
+        buyerId: user.buyerProfile.id
       }
     })
 
@@ -136,11 +156,21 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Get the buyer profile for the current user
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { buyerProfile: true }
+    })
+
+    if (!user?.buyerProfile) {
+      return NextResponse.json({ error: 'Buyer profile not found' }, { status: 404 })
+    }
+
     // Check if review exists and belongs to user
     const existingReview = await prisma.review.findFirst({
       where: {
         id: params.id,
-        userId: session.user.id
+        buyerId: user.buyerProfile.id
       }
     })
 

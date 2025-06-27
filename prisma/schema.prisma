@@ -1,16 +1,16 @@
-// Prisma Accelerate schema
+// MongoDB schema
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 // User model
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
   name      String?
   password  String?
@@ -28,7 +28,6 @@ model User {
   // Relations
   orders           Order[]
   orderItems       OrderItem[]
-  reviews          Review[]
   notifications    Notification[]
   adminLogs        AdminLog[]
   messagesSent     Message[]      @relation("MessagesSent")
@@ -46,8 +45,8 @@ enum UserRole {
 
 // Buyer profile
 model BuyerProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   phone     String?
   createdAt DateTime @default(now())
@@ -63,8 +62,8 @@ model BuyerProfile {
 
 // Seller profile
 model SellerProfile {
-  id              String   @id @default(cuid())
-  userId          String   @unique
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @unique @db.ObjectId
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   businessName    String?
   businessPhone   String?
@@ -78,10 +77,10 @@ model SellerProfile {
   @@map("seller_profiles")
 }
 
-// Driver profile  
+// Driver profile
 model DriverProfile {
-  id            String   @id @default(cuid())
-  userId        String   @unique
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @unique @db.ObjectId
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   phone         String?
   vehicleType   String?
@@ -96,9 +95,9 @@ model DriverProfile {
 
 // Address model
 model Address {
-  id      String       @id @default(cuid())
-  buyerId String
-  buyer   BuyerProfile @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  buyerId   String       @db.ObjectId
+  buyer     BuyerProfile @relation(fields: [buyerId], references: [id], onDelete: Cascade)
 
   fullName  String
   phone     String
@@ -106,8 +105,8 @@ model Address {
   city      String
   state     String
   zipCode   String
-  country   String   @default("US")
-  isDefault Boolean  @default(false)
+  country   String  @default("US")
+  isDefault Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -118,13 +117,13 @@ model Address {
 
 // Category model
 model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String    @unique
   description String?
   imageUrl    String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   products Product[]
 
@@ -133,20 +132,20 @@ model Category {
 
 // Product model
 model Product {
-  id          String   @id @default(cuid())
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String?
   price       Float
-  stock       Int      @default(0)
+  stock       Int           @default(0)
   imageUrl    String?
-  isActive    Boolean  @default(true)
-  categoryId  String
-  sellerId    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean       @default(true)
+  categoryId  String        @db.ObjectId
+  sellerId    String        @db.ObjectId
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  category Category      @relation(fields: [categoryId], references: [id])
-  seller   SellerProfile @relation(fields: [sellerId], references: [id])
+  category   Category      @relation(fields: [categoryId], references: [id])
+  seller     SellerProfile @relation(fields: [sellerId], references: [id])
 
   cartItems  CartItem[]
   orderItems OrderItem[]
@@ -157,12 +156,12 @@ model Product {
 
 // Cart item model
 model CartItem {
-  id        String   @id @default(cuid())
-  buyerId   String
-  productId String
-  quantity  Int      @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  buyerId   String       @db.ObjectId
+  productId String       @db.ObjectId
+  quantity  Int          @default(1)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   buyer   BuyerProfile @relation(fields: [buyerId], references: [id], onDelete: Cascade)
   product Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -173,9 +172,9 @@ model CartItem {
 
 // Order model
 model Order {
-  id          String      @id @default(cuid())
-  buyerId     String
-  addressId   String
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  buyerId     String      @db.ObjectId
+  addressId   String      @db.ObjectId
   status      OrderStatus @default(PENDING)
   totalAmount Float
   shippingFee Float       @default(0)
@@ -190,7 +189,7 @@ model Order {
   orderItems    OrderItem[]
   notifications Notification[]
   User          User?          @relation(fields: [userId], references: [id])
-  userId        String?
+  userId        String?        @db.ObjectId
 
   @@map("orders")
 }
@@ -207,10 +206,10 @@ enum OrderStatus {
 
 // Order item model
 model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  productId String
-  sellerId  String
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String   @db.ObjectId
+  productId String   @db.ObjectId
+  sellerId  String   @db.ObjectId
   quantity  Int
   price     Float
   createdAt DateTime @default(now())
@@ -225,18 +224,16 @@ model OrderItem {
 
 // Review model
 model Review {
-  id        String   @id @default(cuid())
-  buyerId   String
-  productId String
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  buyerId   String       @db.ObjectId
+  productId String       @db.ObjectId
   rating    Int // 1-5 stars
   comment   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   buyer   BuyerProfile @relation(fields: [buyerId], references: [id], onDelete: Cascade)
   product Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
-  User    User?        @relation(fields: [userId], references: [id])
-  userId  String?
 
   @@unique([buyerId, productId])
   @@map("reviews")
@@ -244,9 +241,9 @@ model Review {
 
 // Notification model
 model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  orderId   String?
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String           @db.ObjectId
+  orderId   String?          @db.ObjectId
   type      NotificationType
   title     String
   message   String
@@ -271,9 +268,9 @@ enum NotificationType {
 
 // Message model
 model Message {
-  id         String   @id @default(cuid())
-  senderId   String
-  receiverId String
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
   content    String
   isRead     Boolean  @default(false)
   createdAt  DateTime @default(now())
@@ -286,8 +283,8 @@ model Message {
 
 // Admin log model
 model AdminLog {
-  id        String   @id @default(cuid())
-  adminId   String
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId   String   @db.ObjectId
   action    String
   details   String?
   createdAt DateTime @default(now())

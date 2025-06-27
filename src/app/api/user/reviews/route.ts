@@ -87,10 +87,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
+    // Get buyer profile
+    const buyerProfile = await prisma.buyerProfile.findFirst({
+      where: { userId: session.user.id }
+    })
+
+    if (!buyerProfile) {
+      return NextResponse.json({ error: 'Buyer profile not found' }, { status: 404 })
+    }
+
     // Check if user has already reviewed this product
     const existingReview = await prisma.review.findFirst({
       where: {
-        userId: session.user.id,
+        buyerId: buyerProfile.id,
         productId: validatedData.productId
       }
     })
@@ -113,15 +122,6 @@ export async function POST(request: NextRequest) {
 
     if (!userOrder) {
       return NextResponse.json({ error: 'You can only review products you have purchased' }, { status: 403 })
-    }
-
-    // Get buyer profile
-    const buyerProfile = await prisma.buyerProfile.findFirst({
-      where: { userId: session.user.id }
-    })
-
-    if (!buyerProfile) {
-      return NextResponse.json({ error: 'Buyer profile not found' }, { status: 404 })
     }
 
     // Create new review

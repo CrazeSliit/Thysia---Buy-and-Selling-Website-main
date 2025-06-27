@@ -87,15 +87,6 @@ export async function GET(
             createdAt: true
           }
         },
-        reviews: {
-          include: {
-            product: {
-              select: {
-                name: true
-              }
-            }
-          }
-        },
         notifications: {
           select: {
             id: true,
@@ -107,7 +98,6 @@ export async function GET(
         _count: {
           select: {
             orders: true,
-            reviews: true,
             notifications: true
           }
         }
