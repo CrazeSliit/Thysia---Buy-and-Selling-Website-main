@@ -1,35 +1,42 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { initializeDatabase } from '@/lib/db-init'
 
 export async function GET() {
   try {
-    console.log('Testing MongoDB connection...')
+    console.log('🧪 Testing MongoDB connection...')
     console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
     console.log('DATABASE_URL format:', process.env.DATABASE_URL?.substring(0, 20) + '...')
     
-    // Test database connection - this will create collections if they don't exist
+    // Initialize database first
+    const initResult = await initializeDatabase()
+    console.log('Database initialization result:', initResult)
+    
+    // Test database connection
     await prisma.$connect()
     console.log('✅ Database connected successfully')
     
-    // Try to count users (this will create the collection if it doesn't exist)
+    // Test queries
     const userCount = await prisma.user.count()
     console.log('User count:', userCount)
     
-    // Test creating a simple query
+    const categoryCount = await prisma.category.count()
+    console.log('Category count:', categoryCount)
+    
     const categories = await prisma.category.findMany({
       take: 3,
       select: { id: true, name: true }
     })
-    console.log('Categories found:', categories.length)
     
     await prisma.$disconnect()
     
     return NextResponse.json({ 
       success: true, 
-      message: 'MongoDB connection successful - Collections created automatically',
+      message: 'MongoDB connection and initialization successful',
       data: {
+        initialization: initResult,
         userCount,
-        categoriesCount: categories.length,
+        categoryCount,
         sampleCategories: categories,
         environment: process.env.NODE_ENV,
         databaseConnected: true,
@@ -37,13 +44,13 @@ export async function GET() {
       }
     })
   } catch (error) {
-    console.error('MongoDB connection error:', error)
+    console.error('❌ MongoDB test failed:', error)
     
     await prisma.$disconnect()
     
     return NextResponse.json({ 
       success: false, 
-      error: 'MongoDB connection failed',
+      error: 'MongoDB connection/initialization failed',
       details: {
         message: error instanceof Error ? error.message : 'Unknown error',
         type: error instanceof Error ? error.constructor.name : 'Unknown',
