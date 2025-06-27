@@ -1,32 +1,49 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { prisma } from '@/lib/prisma'
 import { Star, ShoppingCart } from 'lucide-react'
 import AddToCartButton from '@/components/products/AddToCartButton'
 
+// Force dynamic rendering for this page to prevent static generation
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 async function getProducts() {
-  return await prisma.product.findMany({
-    where: {
-      isActive: true
-    },
-    include: {
-      category: true,
-      seller: {
-        select: {
-          businessName: true,
-          isVerified: true
+  // Skip database operations during build if DATABASE_URL is not available
+  if (!process.env.DATABASE_URL || process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'preview') {
+    console.log('Skipping database query - DATABASE_URL not available or in preview mode')
+    return []
+  }
+
+  try {
+    // Import Prisma dynamically to avoid build-time issues
+    const { prisma } = await import('@/lib/prisma')
+    
+    return await prisma.product.findMany({
+      where: {
+        isActive: true
+      },
+      include: {
+        category: true,
+        seller: {
+          select: {
+            businessName: true,
+            isVerified: true
+          }
+        },
+        reviews: {
+          select: {
+            rating: true
+          }
         }
       },
-      reviews: {
-        select: {
-          rating: true
-        }
+      orderBy: {
+        createdAt: 'desc'
       }
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  })
+    })
+  } catch (error) {
+    console.error('Failed to fetch products:', error)
+    return []
+  }
 }
 
 export default async function ProductsPage() {

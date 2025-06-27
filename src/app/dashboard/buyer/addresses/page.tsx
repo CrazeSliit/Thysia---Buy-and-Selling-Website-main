@@ -6,6 +6,9 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import AddressList from '@/components/dashboard/buyer/AddressList'
 import { Address } from '@/types/address'
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
+
 async function getBuyerAddresses(userId: string): Promise<Address[]> {
   try {
     // Get buyer profile

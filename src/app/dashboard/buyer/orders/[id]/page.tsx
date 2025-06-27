@@ -5,6 +5,9 @@ import { prisma } from '@/lib/prisma'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import OrderDetails from '@/components/dashboard/buyer/OrderDetails'
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
+
 interface OrderDetailsPageProps {
   params: {
     id: string

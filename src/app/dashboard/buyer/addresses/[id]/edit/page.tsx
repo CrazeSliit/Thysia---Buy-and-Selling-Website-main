@@ -6,6 +6,9 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import AddressForm from '@/components/dashboard/buyer/AddressForm'
 import { Address } from '@/types/address'
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
+
 interface EditAddressPageProps {
   params: {
     id: string
