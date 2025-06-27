@@ -39,3 +39,13 @@ next-env.d.ts
 # Database
 *.db
 *.db-journal
+
+# Backup files
+prisma/schema-sqlite-backup.prisma
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db

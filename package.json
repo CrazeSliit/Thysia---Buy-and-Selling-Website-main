@@ -4,15 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "devtools": "react-devtools",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:connection": "node test-db-connection.js"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -48,6 +47,7 @@
     "@types/react-devtools": "^3.6.2",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
+    "dotenv": "^16.6.0",
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
     "postcss": "^8",
