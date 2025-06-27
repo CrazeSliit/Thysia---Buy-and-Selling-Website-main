@@ -53,26 +53,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
           }
         }
       },
-      shippingAddress: true,
-      billingAddress: true,
-      delivery: {
-        select: {
-          id: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
-          driver: {
-            select: {
-              user: {
-                select: {
-                  name: true,
-                  email: true
-                }
-              }
-            }
-          }
-        }
-      }
+      shippingAddress: true
     }
   })
 
@@ -88,7 +69,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
             Order Details
           </h1>
           <p className="mt-1 text-sm text-secondary-600">
-            Order #{order.orderNumber}
+            Order #{order.id.slice(-8)}
           </p>
         </div>
         
@@ -101,7 +82,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
           items: order.orderItems.map(item => ({
             id: item.id,
             quantity: item.quantity,
-            price: item.priceAtTime,
+            price: item.price,
             product: {
               id: item.product.id,
               name: item.product.name,
@@ -115,17 +96,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
               }
             }
           })),
-          delivery: order.delivery ? {
-            id: order.delivery.id,
-            status: order.delivery.status,
-            driver: order.delivery.driver ? {
-              id: order.delivery.driver.user.email, // Using email as ID since we don't have driver profile ID
-              user: {
-                name: order.delivery.driver.user.name
-              },
-              vehicleType: null // We don't have vehicle type in our schema yet
-            } : undefined
-          } : null
+          delivery: null // Delivery functionality not implemented yet
         }} />
       </div>
     </DashboardLayout>

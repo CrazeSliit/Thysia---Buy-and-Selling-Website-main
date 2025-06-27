@@ -108,16 +108,19 @@ async function QuickStats({ userId }: { userId: string }) {
       }),
 
       // Total revenue from delivered orders
-      prisma.orderItem.aggregate({
+      prisma.orderItem.findMany({
         where: {
           product: { sellerId: sellerProfile.id },
           order: { status: 'DELIVERED' }
         },
-        _sum: { totalPrice: true }
+        select: {
+          quantity: true,
+          price: true
+        }
       }),
 
       // This month revenue
-      prisma.orderItem.aggregate({
+      prisma.orderItem.findMany({
         where: {
           product: { sellerId: sellerProfile.id },
           order: {
@@ -125,11 +128,14 @@ async function QuickStats({ userId }: { userId: string }) {
             createdAt: { gte: startOfMonth }
           }
         },
-        _sum: { totalPrice: true }
+        select: {
+          quantity: true,
+          price: true
+        }
       }),
 
       // Last month revenue
-      prisma.orderItem.aggregate({
+      prisma.orderItem.findMany({
         where: {
           product: { sellerId: sellerProfile.id },
           order: {
@@ -140,7 +146,10 @@ async function QuickStats({ userId }: { userId: string }) {
             }
           }
         },
-        _sum: { totalPrice: true }
+        select: {
+          quantity: true,
+          price: true
+        }
       }),
     ]);
 
@@ -154,8 +163,8 @@ async function QuickStats({ userId }: { userId: string }) {
     const lastMonthOrders = lastMonthOrderItems._sum.quantity || 0;
     const ordersGrowth = calculateGrowth(thisMonthOrders, lastMonthOrders);
 
-    const currentRevenue = thisMonthRevenue._sum.totalPrice || 0;
-    const previousRevenue = lastMonthRevenue._sum.totalPrice || 0;
+    const currentRevenue = thisMonthRevenue.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+    const previousRevenue = lastMonthRevenue.reduce((sum, item) => sum + (item.quantity * item.price), 0);
     const revenueGrowth = calculateGrowth(currentRevenue, previousRevenue);
 
     const totalItemsSold = totalOrderItems._sum.quantity || 0;
@@ -184,7 +193,7 @@ async function QuickStats({ userId }: { userId: string }) {
     });
 
     sellerStats = {
-      totalRevenue: totalRevenue._sum.totalPrice || 0,
+      totalRevenue: totalRevenue.reduce((sum, item) => sum + (item.quantity * item.price), 0),
       thisMonthRevenue: currentRevenue,
       revenueGrowth: Math.round(revenueGrowth * 10) / 10,
       

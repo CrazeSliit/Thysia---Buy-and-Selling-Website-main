@@ -66,8 +66,13 @@ async function getSellerOrders(userId: string) {
       include: {
         buyer: {
           select: {
-            name: true,
-            email: true
+            id: true,
+            user: {
+              select: {
+                name: true,
+                email: true
+              }
+            }
           }
         },
         orderItems: {
@@ -124,7 +129,7 @@ export default async function RecentOrders({ userId }: RecentOrdersProps) {
         {orders.map((order) => {
           const status = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
           const StatusIcon = status.icon
-          const sellerTotal = order.orderItems.reduce((sum: number, item: any) => sum + (item.quantity * item.priceAtTime), 0)
+          const sellerTotal = order.orderItems.reduce((sum: number, item: any) => sum + (item.quantity * item.price), 0)
 
           return (
             <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-secondary-50 transition-colors">
@@ -153,7 +158,7 @@ export default async function RecentOrders({ userId }: RecentOrdersProps) {
                     </div>
                   </div>
                   <p className="text-sm text-secondary-500">
-                    {order.buyer.name} • {order.orderItems.length} item{order.orderItems.length !== 1 ? 's' : ''}
+                    {order.buyer.user.name || order.buyer.user.email} • {order.orderItems.length} item{order.orderItems.length !== 1 ? 's' : ''}
                   </p>                  <p className="text-xs text-secondary-400">
                     {formatDistanceToNow(order.createdAt, { addSuffix: true })}
                   </p>

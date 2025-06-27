@@ -28,7 +28,7 @@ async function getProductPerformance(userId: string) {
         orderItems: {
           select: {
             quantity: true,
-            priceAtTime: true
+            price: true
           }
         },
         reviews: {
@@ -46,7 +46,7 @@ async function getProductPerformance(userId: string) {
     // Calculate performance metrics for each product
     const productsWithMetrics = products.map(product => {
       const totalSold = product.orderItems.reduce((sum, item) => sum + item.quantity, 0)
-      const totalRevenue = product.orderItems.reduce((sum, item) => sum + (item.quantity * item.priceAtTime), 0)
+      const totalRevenue = product.orderItems.reduce((sum, item) => sum + (item.quantity * item.price), 0)
       const avgRating = product.reviews.length > 0 
         ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
         : 0

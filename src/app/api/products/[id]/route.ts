@@ -33,9 +33,13 @@ export async function GET(
         },
         reviews: {
           include: {
-            user: {
-              select: {
-                name: true
+            buyer: {
+              include: {
+                user: {
+                  select: {
+                    name: true
+                  }
+                }
               }
             }
           },
@@ -47,8 +51,7 @@ export async function GET(
         _count: {
           select: {
             reviews: true,
-            orderItems: true,
-            wishlistItems: true
+            orderItems: true
           }
         }
       }
@@ -63,10 +66,11 @@ export async function GET(
         ...product,
         createdAt: product.createdAt.toISOString(),
         updatedAt: product.updatedAt.toISOString(),
-        reviews: product.reviews.map(review => ({
+        reviews: product.reviews?.map(review => ({
           ...review,
-          createdAt: review.createdAt.toISOString()
-        }))
+          createdAt: review.createdAt.toISOString(),
+          updatedAt: review.updatedAt.toISOString()
+        })) || []
       }
     })
   } catch (error) {

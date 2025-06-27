@@ -127,8 +127,8 @@ export async function PUT(request: NextRequest) {
       where: { userId: session.user.id },
       data: {
         businessName: validatedData.businessName,
-        phone: validatedData.phone,
-        address: validatedData.address,
+        businessPhone: validatedData.phone,
+        businessAddress: validatedData.address,
       },
       include: {
         user: {

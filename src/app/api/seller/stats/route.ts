@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
           product: { sellerId: sellerProfile.id },
           order: { status: 'DELIVERED' }
         },
-        _sum: { totalPrice: true }
+        _sum: { price: true }
       }),
 
       // This month revenue
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
             createdAt: { gte: startOfMonth }
           }
         },
-        _sum: { totalPrice: true }
+        _sum: { price: true }
       }),
 
       // Last month revenue
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        _sum: { totalPrice: true }
+        _sum: { price: true }
       }),
 
       // Total reviews count
@@ -146,8 +146,8 @@ export async function GET(request: NextRequest) {
 
     const thisMonthOrders = thisMonthOrderItems._sum.quantity || 0;
     const lastMonthOrders = lastMonthOrderItems._sum.quantity || 0;
-    const ordersGrowth = calculateGrowth(thisMonthOrders, lastMonthOrders);    const currentRevenue = thisMonthRevenue._sum?.totalPrice || 0;
-    const previousRevenue = lastMonthRevenue._sum?.totalPrice || 0;
+    const ordersGrowth = calculateGrowth(thisMonthOrders, lastMonthOrders);    const currentRevenue = thisMonthRevenue._sum?.price || 0;
+    const previousRevenue = lastMonthRevenue._sum?.price || 0;
     const revenueGrowth = calculateGrowth(currentRevenue, previousRevenue);
 
     // Get total unique orders (not just order items)
@@ -194,7 +194,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       stats: {
-        totalRevenue: totalRevenue._sum?.totalPrice || 0,
+        totalRevenue: totalRevenue._sum?.price || 0,
         thisMonthRevenue: currentRevenue,
         revenueGrowth: Math.round(revenueGrowth * 10) / 10,
         

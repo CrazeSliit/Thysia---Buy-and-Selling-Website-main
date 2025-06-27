@@ -60,28 +60,27 @@ export async function GET(request: NextRequest) {
     const [orders, totalCount] = await Promise.all([
       prisma.order.findMany({
         where: whereClause,
-        include: {          buyer: {
+        include: {
+          buyer: {
             select: {
-              id: true,
-              name: true,
-              email: true,
-              buyerProfile: {
+              user: {
                 select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              },
+              phone: true,
+              addresses: {
+                where: { isDefault: true },
+                select: {
+                  fullName: true,
                   phone: true,
-                  addresses: {
-                    where: { isDefault: true },
-                    select: {
-                      firstName: true,
-                      lastName: true,
-                      address1: true,
-                      address2: true,
-                      city: true,
-                      state: true,
-                      zipCode: true,
-                      country: true,
-                      phone: true
-                    }
-                  }
+                  street: true,
+                  city: true,
+                  state: true,
+                  zipCode: true,
+                  country: true
                 }
               }
             }
@@ -99,21 +98,6 @@ export async function GET(request: NextRequest) {
                   name: true,
                   price: true,
                   imageUrl: true
-                }
-              }
-            }
-          },          delivery: {
-            select: {
-              id: true,
-              status: true,
-              driver: {
-                select: {
-                  id: true,
-                  user: {
-                    select: {
-                      name: true
-                    }
-                  }
                 }
               }
             }

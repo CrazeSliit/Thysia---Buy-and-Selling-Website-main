@@ -43,21 +43,12 @@ export async function GET(
                 }
               }
             },
-            wishlistItems: {
-              include: {
-                product: {
-                  select: {
-                    name: true,
-                    price: true
-                  }
-                }
-              }
-            },
             _count: {
               select: {
                 addresses: true,
                 cartItems: true,
-                wishlistItems: true
+                orders: true,
+                reviews: true
               }
             }
           }
@@ -87,28 +78,7 @@ export async function GET(
             }
           }
         },
-        driverProfile: {
-          include: {
-            deliveries: {
-              select: {
-                id: true,
-                status: true,
-                createdAt: true,
-                order: {
-                  select: {
-                    id: true,
-                    totalAmount: true
-                  }
-                }
-              }
-            },
-            _count: {
-              select: {
-                deliveries: true
-              }
-            }
-          }
-        },
+        driverProfile: true,
         orders: {
           select: {
             id: true,

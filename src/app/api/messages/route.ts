@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // Basic validation
-    if (!body.receiverId || !body.subject || !body.content) {
+    if (!body.receiverId || !body.content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -159,10 +159,8 @@ export async function POST(request: NextRequest) {
       id: `msg_${Date.now()}`,
       senderId: session.user.id,
       receiverId: body.receiverId,
-      subject: body.subject,
       content: body.content,
       isRead: false,
-      orderId: body.orderId || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       sender: {

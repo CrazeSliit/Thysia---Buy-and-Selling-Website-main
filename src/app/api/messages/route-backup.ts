@@ -7,9 +7,7 @@ import { z } from 'zod'
 // Schema for creating a message
 const createMessageSchema = z.object({
   receiverId: z.string().min(1, 'Receiver ID is required'),
-  subject: z.string().min(1, 'Subject is required').max(255, 'Subject too long'),
-  content: z.string().min(1, 'Message content is required'),
-  orderId: z.string().optional() // Optional order reference
+  content: z.string().min(1, 'Message content is required')
 })
 
 // Schema for updating message status
@@ -61,12 +59,6 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               role: true
-            }
-          },
-          order: {
-            select: {
-              id: true,
-              status: true
             }
           }
         },
@@ -167,28 +159,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Receiver not found' }, { status: 404 })
     }
 
-    // Verify order exists if orderId is provided
-    if (validatedData.orderId) {
-      const order = await prisma.order.findFirst({
-        where: {
-          id: validatedData.orderId,
-          buyerId: session.user.id
-        }
-      })
-
-      if (!order) {
-        return NextResponse.json({ error: 'Order not found or access denied' }, { status: 404 })
-      }
-    }
-
     // Create the message
     const message = await prisma.message.create({
       data: {
         senderId: session.user.id,
         receiverId: validatedData.receiverId,
-        subject: validatedData.subject,
         content: validatedData.content,
-        orderId: validatedData.orderId,
         isRead: false
       },
       include: {
@@ -204,12 +180,6 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             role: true
-          }
-        },
-        order: {
-          select: {
-            id: true,
-            status: true
           }
         }
       }

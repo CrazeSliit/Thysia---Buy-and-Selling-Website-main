@@ -36,11 +36,12 @@ export async function GET() {
             addresses: {
               select: {
                 id: true,
-                firstName: true,
-                lastName: true,
-                address1: true,
+                fullName: true,
+                phone: true,
+                street: true,
                 city: true,
                 state: true,
+                zipCode: true,
                 country: true,
                 isDefault: true
               }

@@ -100,8 +100,12 @@ export async function PATCH(
       include: {
         buyer: {
           select: {
-            name: true,
-            email: true
+            user: {
+              select: {
+                name: true,
+                email: true
+              }
+            }
           }
         },
         orderItems: {

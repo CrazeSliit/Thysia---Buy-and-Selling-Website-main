@@ -32,12 +32,11 @@ export default function AddressForm({ address, isEditing = false, onSubmit, onCa
   const [error, setError] = useState('')
 
   const [formData, setFormData] = useState<AddressFormData>({
-    type: address?.type || 'HOME',
-    firstName: address?.firstName || '',
-    lastName: address?.lastName || '',
-    company: address?.company || '',
-    address1: address?.address1 || '',
-    address2: address?.address2 || '',
+    firstName: '', // We'll need to parse this from fullName if address exists
+    lastName: '', // We'll need to parse this from fullName if address exists
+    company: '',
+    address1: '', // We'll need to parse this from street if address exists
+    address2: '',
     city: address?.city || '',
     state: address?.state || '',
     zipCode: address?.zipCode || '',
@@ -107,39 +106,6 @@ export default function AddressForm({ address, isEditing = false, onSubmit, onCa
             {error}
           </div>
         )}
-
-        {/* Address Type */}
-        <div>
-          <label className="block text-sm font-medium text-secondary-700 mb-2">
-            Address Type
-          </label>
-          <div className="grid grid-cols-3 gap-3">
-            {ADDRESS_TYPES.map((type) => {
-              const Icon = type.icon
-              return (
-                <label
-                  key={type.value}
-                  className={`relative flex items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${
-                    formData.type === type.value
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-secondary-300 bg-white text-secondary-600 hover:bg-secondary-50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="type"
-                    value={type.value}
-                    checked={formData.type === type.value}
-                    onChange={handleInputChange}
-                    className="sr-only"
-                  />
-                  <Icon className="w-5 h-5 mr-2" />
-                  <span className="text-sm font-medium">{type.label}</span>
-                </label>
-              )
-            })}
-          </div>
-        </div>
 
         {/* Name Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

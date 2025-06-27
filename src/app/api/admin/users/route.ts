@@ -98,12 +98,7 @@ export async function GET(request: NextRequest) {
               id: true,
               vehicleType: true,
               isVerified: true,
-              isAvailable: true,
-              _count: {
-                select: {
-                  deliveries: true
-                }
-              }
+              isAvailable: true
             }
           },
           _count: {

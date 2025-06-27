@@ -42,8 +42,12 @@ async function getOrderForSeller(orderId: string, userId: string) {
         buyer: {
           select: {
             id: true,
-            name: true,
-            email: true
+            user: {
+              select: {
+                name: true,
+                email: true
+              }
+            }
           }
         },
         orderItems: {
@@ -62,21 +66,6 @@ async function getOrderForSeller(orderId: string, userId: string) {
                     businessName: true
                   }
                 }
-              }
-            }
-          }
-        },
-        delivery: {
-          include: {
-            driver: {
-              select: {
-                id: true,
-                user: {
-                  select: {
-                    name: true
-                  }
-                },
-                vehicleType: true
               }
             }
           }
@@ -122,19 +111,24 @@ export default async function SellerOrderDetailsPage({ params }: SellerOrderDeta
           <SellerOrderDetails 
           order={{
             ...order,
+            buyer: {
+              id: order.buyer.id,
+              name: order.buyer.user.name,
+              email: order.buyer.user.email
+            },
             total: order.totalAmount, // Map totalAmount to total
             items: order.orderItems.map(item => ({
               id: item.id,
               quantity: item.quantity,
-              price: item.priceAtTime, // Map priceAtTime to price
-              product: item.product
+              price: item.price, // Use price instead of priceAtTime
+              product: {
+                ...item.product,
+                imageUrl: item.product.imageUrl || '/placeholder-product.jpg'
+              }
             })),
             createdAt: order.createdAt.toISOString(),
             updatedAt: order.updatedAt.toISOString(),
-            delivery: order.delivery ? {
-              ...order.delivery,
-              driver: order.delivery.driver || undefined
-            } : undefined
+            delivery: null // Delivery functionality not implemented yet
           }} 
         />
       </div>

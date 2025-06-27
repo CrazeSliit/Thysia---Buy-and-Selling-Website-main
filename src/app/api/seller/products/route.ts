@@ -122,7 +122,6 @@ export async function POST(request: NextRequest) {
         sellerId: sellerProfile.id,
         imageUrl: validatedData.imageUrl || '',
         stock: validatedData.stock,
-        isFeatured: validatedData.isFeatured || false,
         isActive: validatedData.isActive !== false,
       },
       include: {

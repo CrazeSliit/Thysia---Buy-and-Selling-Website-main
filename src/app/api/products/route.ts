@@ -49,14 +49,12 @@ export async function GET(request: NextRequest) {
           },
           reviews: {
             select: { rating: true }
-          },
-          _count: {
-            select: {
-              reviews: true,
-              orderItems: true,
-              wishlistItems: true
+          },            _count: {
+              select: {
+                reviews: true,
+                orderItems: true
+              }
             }
-          }
         },
         orderBy: {
           [sortBy]: sortOrder as 'asc' | 'desc'

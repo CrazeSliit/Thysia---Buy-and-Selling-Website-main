@@ -147,12 +147,7 @@ export default async function ProductsPage() {
                       </div>
                     )}
                     
-                    {/* Featured Badge */}
-                    {product.isFeatured && (
-                      <div className="absolute top-2 left-2 bg-primary-600 text-white text-xs font-medium px-2 py-1 rounded">
-                        Featured
-                      </div>
-                    )}
+                    {/* No featured badge since isFeatured is not in our schema */}
                     
                     {/* Discount Badge */}
                     {hasDiscount && (

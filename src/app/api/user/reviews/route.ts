@@ -20,9 +20,18 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Get buyer profile
+    const buyerProfile = await prisma.buyerProfile.findFirst({
+      where: { userId: session.user.id }
+    })
+
+    if (!buyerProfile) {
+      return NextResponse.json({ error: 'Buyer profile not found' }, { status: 404 })
+    }
+
     // Fetch user reviews with product details
     const reviews = await prisma.review.findMany({
-      where: { userId: session.user.id },
+      where: { buyerId: buyerProfile.id },
       include: {
         product: {
           select: {
@@ -106,10 +115,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'You can only review products you have purchased' }, { status: 403 })
     }
 
+    // Get buyer profile
+    const buyerProfile = await prisma.buyerProfile.findFirst({
+      where: { userId: session.user.id }
+    })
+
+    if (!buyerProfile) {
+      return NextResponse.json({ error: 'Buyer profile not found' }, { status: 404 })
+    }
+
     // Create new review
     const review = await prisma.review.create({
       data: {
-        userId: session.user.id,
+        buyerId: buyerProfile.id,
         productId: validatedData.productId,
         rating: validatedData.rating,
         comment: validatedData.comment || null

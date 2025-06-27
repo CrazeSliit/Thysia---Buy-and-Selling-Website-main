@@ -36,11 +36,6 @@ export async function GET() {
             email: true,
             createdAt: true
           }
-        },
-        _count: {
-          select: {
-            deliveries: true
-          }
         }
       }
     })
@@ -48,19 +43,6 @@ export async function GET() {
     if (!driverProfile) {
       return NextResponse.json({ error: 'Driver profile not found' }, { status: 404 })
     }
-
-    // Get additional stats
-    const deliveryStats = await prisma.delivery.groupBy({
-      by: ['status'],
-      where: { driverId: driverProfile.id },
-      _count: {
-        id: true
-      }
-    })
-
-    const completedDeliveries = deliveryStats.find(stat => stat.status === 'DELIVERED')?._count.id || 0
-    const pendingDeliveries = deliveryStats.find(stat => stat.status === 'PENDING')?._count.id || 0
-    const inProgressDeliveries = deliveryStats.find(stat => stat.status === 'OUT_FOR_DELIVERY')?._count.id || 0
 
     return NextResponse.json({
       profile: {
@@ -71,12 +53,6 @@ export async function GET() {
           ...driverProfile.user,
           createdAt: driverProfile.user.createdAt.toISOString(),
         }
-      },
-      stats: {
-        totalDeliveries: driverProfile._count.deliveries,
-        completedDeliveries,
-        pendingDeliveries,
-        inProgressDeliveries
       }
     })
   } catch (error) {

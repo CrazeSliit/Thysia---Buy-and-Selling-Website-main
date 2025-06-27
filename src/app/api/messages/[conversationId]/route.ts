@@ -105,7 +105,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { content, subject, orderId } = body
+    const { content } = body
 
     if (!content || content.trim().length === 0) {
       return NextResponse.json({ error: 'Message content is required' }, { status: 400 })
@@ -126,9 +126,7 @@ export async function POST(
       data: {
         senderId: session.user.id,
         receiverId: params.conversationId,
-        subject: subject || 'Message',
         content: content.trim(),
-        orderId: orderId,
         isRead: false
       },
       include: {
@@ -144,12 +142,6 @@ export async function POST(
             id: true,
             name: true,
             role: true
-          }
-        },
-        order: {
-          select: {
-            id: true,
-            status: true
           }
         }
       }

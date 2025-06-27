@@ -83,8 +83,7 @@ export default function AddressList({ addresses, onDelete, onSetDefault }: Addre
 
   const formatAddress = (address: Address) => {
     const parts = [
-      address.address1,
-      address.address2,
+      address.street,
       `${address.city}, ${address.state} ${address.zipCode}`,
       address.country !== 'US' ? address.country : null
     ].filter(Boolean)
@@ -130,8 +129,6 @@ export default function AddressList({ addresses, onDelete, onSetDefault }: Addre
       {/* Address Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {addresses.map((address) => {
-          const TypeIcon = ADDRESS_TYPE_ICONS[address.type as keyof typeof ADDRESS_TYPE_ICONS]
-          
           return (
             <div
               key={address.id}
@@ -149,22 +146,11 @@ export default function AddressList({ addresses, onDelete, onSetDefault }: Addre
                 </div>
               )}
 
-              {/* Address Type */}
-              <div className="flex items-center mb-3">
-                <TypeIcon className="w-5 h-5 text-secondary-600 mr-2" />
-                <span className="text-sm font-medium text-secondary-700 uppercase tracking-wide">
-                  {address.type}
-                </span>
-              </div>
-
               {/* Name */}
               <div className="mb-2">
                 <h3 className="font-semibold text-secondary-900">
-                  {address.firstName} {address.lastName}
+                  {address.fullName}
                 </h3>
-                {address.company && (
-                  <p className="text-sm text-secondary-600">{address.company}</p>
-                )}
               </div>
 
               {/* Address */}

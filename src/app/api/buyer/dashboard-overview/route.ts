@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
     const [
       user,
       recentOrders,
-      wishlistCount,
       cartItemsCount,
       totalSpent
     ] = await Promise.all([
@@ -56,9 +55,6 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { createdAt: 'desc' },
         take: 5
-      }),      // Wishlist items count
-      prisma.wishlistItem.count({
-        where: { buyerId: userId }
       }),
 
       // Cart items count
@@ -113,7 +109,6 @@ export async function GET(request: NextRequest) {
       stats: {
         totalOrders,
         pendingOrders,
-        wishlistItems: wishlistCount,
         cartItems: cartItemsCount,
         totalSpent: totalSpent._sum.totalAmount || 0,
         recentActivity
@@ -127,7 +122,7 @@ export async function GET(request: NextRequest) {
         firstItem: order.orderItems[0] ? {
           productName: order.orderItems[0].product.name,
           productImage: order.orderItems[0].product.imageUrl,
-          price: order.orderItems[0].priceAtTime
+          price: order.orderItems[0].price
         } : null
       }))
     })

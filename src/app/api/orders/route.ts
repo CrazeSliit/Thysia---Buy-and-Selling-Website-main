@@ -73,8 +73,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        shippingAddress: true,
-        billingAddress: true
+        shippingAddress: true
       },
       orderBy: { createdAt: 'desc' },
       skip,
@@ -259,19 +258,21 @@ export async function POST(request: NextRequest) {
       // Create the order
       const newOrder = await tx.order.create({
         data: {
-          orderNumber,
-          buyerId: session.user.id, // Use User ID for Order relation
+          buyerId: buyerProfile.id,
+          addressId: shippingAddressId,
           status: 'PENDING',
-          subtotal,
-          taxAmount,
-          shippingCost,
-          totalAmount,
-          paymentMethod,
-          paymentStatus: 'PENDING',
-          shippingAddressId,
-          billingAddressId: billingAddressId || shippingAddressId,
+          totalAmount: totalAmount,
+          shippingFee: shippingCost,
+          taxes: taxAmount,
+          finalAmount: totalAmount,
+          userId: session.user.id,
           orderItems: {
-            create: orderItemsData
+            create: orderItemsData.map(item => ({
+              productId: item.productId,
+              sellerId: item.sellerId,
+              quantity: item.quantity,
+              price: item.priceAtTime
+            }))
           }
         },
         include: {
@@ -308,15 +309,6 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      // Create delivery record for the order
-      await tx.delivery.create({
-        data: {
-          orderId: newOrder.id,
-          status: 'PENDING'
-          // driverId is null initially (unassigned)
-        }
-      })
-
       return newOrder
     })
 
@@ -329,7 +321,6 @@ export async function POST(request: NextRequest) {
         await prisma.order.update({
           where: { id: order.id },
           data: {
-            paymentStatus: 'PAID',
             status: 'CONFIRMED'
           }
         })
@@ -342,10 +333,8 @@ export async function POST(request: NextRequest) {
       success: true,
       order: {
         id: order.id,
-        orderNumber: order.orderNumber,
         totalAmount: order.totalAmount,
         status: order.status,
-        paymentStatus: order.paymentStatus,
         estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
         orderItems: order.orderItems
       },
