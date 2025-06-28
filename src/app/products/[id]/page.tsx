@@ -45,8 +45,10 @@ interface Product {
     rating: number
     comment: string
     createdAt: string
-    user: {
-      name: string | null
+    buyer: {
+      user: {
+        name: string | null
+      }
     }
   }>
   _count: {
@@ -400,7 +402,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                           <div>
                             <div className="flex items-center space-x-2 mb-1">
                               <span className="font-medium text-secondary-900">
-                                {review.user.name}
+                                {review.buyer.user.name}
                               </span>
                               <div className="flex items-center">
                                 {[1, 2, 3, 4, 5].map((star) => (
