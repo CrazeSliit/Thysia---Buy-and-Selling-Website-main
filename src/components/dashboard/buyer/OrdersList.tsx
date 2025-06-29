@@ -13,7 +13,7 @@ interface Order {
   orderItems: Array<{
     id: string
     quantity: number
-    priceAtTime: number
+    price: number
     product: {
       id: string
       name: string
@@ -222,12 +222,12 @@ export default function OrdersList({ userId }: OrdersListProps) {
                           <h4 className="text-sm font-medium text-secondary-900">
                             {item.product.name}
                           </h4>                          <p className="text-sm text-secondary-500">
-                            Quantity: {item.quantity} • ${item.priceAtTime.toFixed(2)} each
+                            Quantity: {item.quantity} • ${item.price.toFixed(2)} each
                           </p>
                         </div>
                         <div className="flex-shrink-0">
                           <p className="text-sm font-medium text-secondary-900">
-                            ${(item.quantity * item.priceAtTime).toFixed(2)}
+                            ${(item.quantity * item.price).toFixed(2)}
                           </p>
                         </div>
                       </div>

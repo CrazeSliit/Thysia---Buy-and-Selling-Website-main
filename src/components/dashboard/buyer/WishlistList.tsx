@@ -33,7 +33,7 @@ interface WishlistItem {
 }
 
 interface WishlistResponse {
-  wishlistItems: WishlistItem[]
+  wishlist: WishlistItem[]
 }
 
 export default function WishlistList() {
@@ -65,12 +65,8 @@ export default function WishlistList() {
   const removeFromWishlist = async (productId: string) => {
     setRemovingItem(productId)
     try {
-      const response = await fetch('/api/user/wishlist', {
+      const response = await fetch(`/api/user/wishlist?productId=${encodeURIComponent(productId)}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ productId }),
       })
 
       if (!response.ok) {
@@ -119,7 +115,7 @@ export default function WishlistList() {
     )
   }
 
-  if (!wishlistData || wishlistData.wishlistItems.length === 0) {
+  if (!wishlistData || wishlistData.wishlist.length === 0) {
     return (
       <div className="text-center py-12">
         <Heart className="mx-auto h-16 w-16 text-gray-400 mb-4" />
@@ -134,7 +130,7 @@ export default function WishlistList() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {wishlistData.wishlistItems.map((item) => (
+      {wishlistData.wishlist.map((item) => (
         <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
           <div className="relative">
             <div className="aspect-w-16 aspect-h-9 relative h-48 w-full overflow-hidden">              <Image

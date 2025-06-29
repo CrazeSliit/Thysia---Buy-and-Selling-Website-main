@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Star, ShoppingCart, Heart, Share2, ArrowLeft, Truck, Shield, RefreshCw, Loader2 } from 'lucide-react'
+import { Star, ShoppingCart, Heart, Share2, ArrowLeft, Truck, Shield, RefreshCw } from 'lucide-react'
 import AddToCartButton from '@/components/products/AddToCartButton'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -61,7 +61,6 @@ interface Product {
 export default function ProductPage({ params }: ProductPageProps) {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
-  const [addingToWishlist, setAddingToWishlist] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
@@ -86,39 +85,6 @@ export default function ProductPage({ params }: ProductPageProps) {
     }
     fetchProduct()
   }, [params.id])
-
-  const addToWishlist = async () => {
-    setAddingToWishlist(true)
-    try {
-      const response = await fetch('/api/user/wishlist', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ productId: params.id }),
-      })
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          toast.error('Please sign in to add items to wishlist')
-          router.push('/auth/signin?callbackUrl=/products')
-          return
-        }
-        if (response.status === 409) {
-          toast.info('Item is already in your wishlist')
-          return
-        }
-        throw new Error('Failed to add item to wishlist')
-      }
-
-      toast.success('Item added to wishlist!')
-    } catch (error) {
-      console.error('Error adding to wishlist:', error)
-      toast.error('Failed to add item to wishlist')
-    } finally {
-      setAddingToWishlist(false)
-    }
-  }
 
   const shareProduct = async () => {
     if (navigator.share && product) {
@@ -309,18 +275,6 @@ export default function ProductPage({ params }: ProductPageProps) {
                     isActive={product.isActive}
                   />
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  onClick={addToWishlist}
-                  disabled={addingToWishlist}
-                >
-                  {addingToWishlist ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Heart className="w-4 h-4" />
-                  )}
-                </Button>
                 <Button 
                   variant="outline" 
                   size="lg"

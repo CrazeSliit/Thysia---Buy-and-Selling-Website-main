@@ -56,6 +56,7 @@ model BuyerProfile {
   cartItems CartItem[]
   orders    Order[]
   reviews   Review[]
+  wishlists Wishlist[]
 
   @@map("buyer_profiles")
 }
@@ -152,6 +153,7 @@ model Product {
   cartItems  CartItem[]
   orderItems OrderItem[]
   reviews    Review[]
+  wishlists  Wishlist[]
 
   @@map("products")
 }
@@ -294,4 +296,18 @@ model AdminLog {
   admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@map("admin_logs")
+}
+
+// Wishlist model
+model Wishlist {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  buyerId   String   @db.ObjectId
+  productId String   @db.ObjectId
+  createdAt DateTime @default(now())
+
+  buyer   BuyerProfile @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  product Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([buyerId, productId]) // Prevent duplicate entries
+  @@map("wishlists")
 }

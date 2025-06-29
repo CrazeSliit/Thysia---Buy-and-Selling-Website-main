@@ -11,12 +11,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // First get the buyer profile
+    const buyerProfile = await prisma.buyerProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true }
+    })
+
+    if (!buyerProfile) {
+      return NextResponse.json({ error: 'Buyer profile not found' }, { status: 404 })
+    }
+
     const orders = await prisma.order.findMany({
       where: {
-        buyerId: session.user.id,
+        buyerId: buyerProfile.id, // Use buyerProfile.id instead of session.user.id
       },      include: {
         orderItems: {
-          include: {
+          select: {
+            id: true,
+            quantity: true,
+            price: true, // Include the price field
             product: {
               select: {
                 id: true,

@@ -25,11 +25,21 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
     redirect('/unauthorized')
   }
 
+  // First get the buyer profile
+  const buyerProfile = await prisma.buyerProfile.findUnique({
+    where: { userId: session.user.id },
+    select: { id: true }
+  })
+
+  if (!buyerProfile) {
+    redirect('/dashboard/buyer/orders')
+  }
+
   // Fetch the order details
   const order = await prisma.order.findFirst({
     where: {
       id: params.id,
-      buyerId: session.user.id, // Ensure buyer can only view their own orders
+      buyerId: buyerProfile.id, // Use buyerProfile.id instead of session.user.id
     },
     include: {
       orderItems: {
@@ -43,8 +53,14 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                 select: {
                   name: true
                 }
-              },
-              seller: {
+              }
+            }
+          },
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              sellerProfile: {
                 select: {
                   businessName: true
                 }
@@ -92,7 +108,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
               },
               seller: {
                 id: item.sellerId,
-                businessName: item.product.seller?.businessName || 'Unknown Seller'
+                businessName: item.seller?.sellerProfile?.businessName || item.seller?.name || 'Unknown Seller'
               }
             }
           })),
