@@ -35,6 +35,16 @@ const nextConfig = {  images: {
       },
       {
         protocol: 'https',
+        hostname: 'ibb.co',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ibb.co',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'imgur.com',
       },
       {
