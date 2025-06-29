@@ -1,69 +1,67 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-// Mock data for charts
-const salesData = [
-  { month: 'Jan', revenue: 45000, orders: 1200, users: 2800 },
-  { month: 'Feb', revenue: 52000, orders: 1400, users: 3200 },
-  { month: 'Mar', revenue: 48000, orders: 1300, users: 3000 },
-  { month: 'Apr', revenue: 61000, orders: 1600, users: 3800 },
-  { month: 'May', revenue: 55000, orders: 1500, users: 3500 },
-  { month: 'Jun', revenue: 67000, orders: 1800, users: 4200 },
-];
+interface PlatformStatsProps {
+  stats: {
+    totalUsers: number;
+    totalProducts: number;
+    totalOrders: number;
+    totalRevenue: number;
+    monthlyRevenue: number;
+    orderBreakdown: {
+      pending: number;
+      shipped: number;
+      delivered: number;
+      cancelled: number;
+    };
+    userBreakdown: {
+      buyers: number;
+      sellers: number;
+      drivers: number;
+      admins: number;
+    };
+    averageOrderValue: number;
+    revenueGrowth: number;
+    topSellingProducts: Array<{
+      id: string;
+      name: string;
+      price: number;
+      totalSold: number;
+      orderCount: number;
+    }>;
+  };
+}
 
-const categoryData = [
-  { name: 'Electronics', value: 35, color: '#3B82F6' },
-  { name: 'Fashion', value: 25, color: '#10B981' },
-  { name: 'Home & Garden', value: 20, color: '#F59E0B' },
-  { name: 'Sports', value: 12, color: '#EF4444' },
-  { name: 'Other', value: 8, color: '#8B5CF6' },
-];
+export default function PlatformStats({ stats }: PlatformStatsProps) {
+  // Generate chart data from real stats
+  const orderStatusData = [
+    { name: 'Pending', value: stats.orderBreakdown.pending, color: '#F59E0B' },
+    { name: 'Shipped', value: stats.orderBreakdown.shipped, color: '#3B82F6' },
+    { name: 'Delivered', value: stats.orderBreakdown.delivered, color: '#10B981' },
+    { name: 'Cancelled', value: stats.orderBreakdown.cancelled, color: '#EF4444' },
+  ];
 
-const trafficData = [
-  { day: 'Mon', visitors: 2400, pageViews: 4800 },
-  { day: 'Tue', visitors: 2600, pageViews: 5200 },
-  { day: 'Wed', visitors: 2800, pageViews: 5600 },
-  { day: 'Thu', visitors: 3200, pageViews: 6400 },
-  { day: 'Fri', visitors: 3600, pageViews: 7200 },
-  { day: 'Sat', visitors: 4200, pageViews: 8400 },
-  { day: 'Sun', visitors: 3800, pageViews: 7600 },
-];
+  const userRoleData = [
+    { name: 'Buyers', value: stats.userBreakdown.buyers, color: '#3B82F6' },
+    { name: 'Sellers', value: stats.userBreakdown.sellers, color: '#10B981' },
+    { name: 'Drivers', value: stats.userBreakdown.drivers, color: '#F59E0B' },
+    { name: 'Admins', value: stats.userBreakdown.admins, color: '#8B5CF6' },
+  ];
 
-export default function PlatformStats() {
+  const topProductsData = stats.topSellingProducts.map(product => ({
+    name: product.name.length > 15 ? product.name.substring(0, 15) + '...' : product.name,
+    sales: product.totalSold,
+    revenue: product.price * product.totalSold
+  }));
+
   return (
     <div className="space-y-6">
-      {/* Revenue and Orders Chart */}
+      {/* Order Status Breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Revenue & Orders Trend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={salesData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />                <Tooltip 
-                  formatter={(value: any, name: any) => [
-                    name === 'revenue' ? `$${value?.toLocaleString()}` : value?.toLocaleString(),
-                    name === 'revenue' ? 'Revenue' : 'Orders'
-                  ]}
-                />
-                <Bar yAxisId="left" dataKey="revenue" fill="#3B82F6" name="revenue" />
-                <Bar yAxisId="right" dataKey="orders" fill="#10B981" name="orders" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sales by Category */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">Sales by Category</CardTitle>
+          <CardTitle className="text-lg font-semibold">Order Status Distribution</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center">
@@ -71,7 +69,7 @@ export default function PlatformStats() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={categoryData}
+                    data={orderStatusData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -79,23 +77,23 @@ export default function PlatformStats() {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {categoryData.map((entry, index) => (
+                    {orderStatusData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: any) => [`${value}%`, 'Share']} />
+                  <Tooltip formatter={(value: any) => [value, 'Orders']} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
             <div className="ml-6 space-y-2">
-              {categoryData.map((category, index) => (
+              {orderStatusData.map((status, index) => (
                 <div key={index} className="flex items-center">
                   <div 
                     className="w-3 h-3 rounded-full mr-2"
-                    style={{ backgroundColor: category.color }}
+                    style={{ backgroundColor: status.color }}
                   ></div>
                   <span className="text-sm text-gray-600">
-                    {category.name} ({category.value}%)
+                    {status.name}: {status.value}
                   </span>
                 </div>
               ))}
@@ -104,35 +102,76 @@ export default function PlatformStats() {
         </CardContent>
       </Card>
 
-      {/* Website Traffic */}
+      {/* User Role Distribution */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Website Traffic (Last 7 Days)</CardTitle>
+          <CardTitle className="text-lg font-semibold">User Role Distribution</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trafficData}>
+              <BarChart data={userRoleData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
+                <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="visitors" 
-                  stroke="#3B82F6" 
-                  strokeWidth={2}
-                  name="Visitors"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="pageViews" 
-                  stroke="#10B981" 
-                  strokeWidth={2}
-                  name="Page Views"
-                />
-              </LineChart>
+                <Tooltip formatter={(value: any) => [value, 'Users']} />
+                <Bar dataKey="value" fill="#3B82F6" />
+              </BarChart>
             </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Top Selling Products */}
+      {topProductsData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Top Selling Products</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topProductsData} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis dataKey="name" type="category" width={100} />
+                  <Tooltip 
+                    formatter={(value: any, name: any) => [
+                      name === 'sales' ? `${value} sold` : `$${value?.toLocaleString()}`,
+                      name === 'sales' ? 'Units Sold' : 'Revenue'
+                    ]}
+                  />
+                  <Bar dataKey="sales" fill="#10B981" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Key Metrics Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Platform Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <p className="text-2xl font-bold text-blue-600">${stats.averageOrderValue.toFixed(2)}</p>
+              <p className="text-sm text-gray-600">Avg Order Value</p>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <p className="text-2xl font-bold text-green-600">{stats.revenueGrowth.toFixed(1)}%</p>
+              <p className="text-sm text-gray-600">Revenue Growth</p>
+            </div>
+            <div className="text-center p-4 bg-yellow-50 rounded-lg">
+              <p className="text-2xl font-bold text-yellow-600">{stats.totalOrders > 0 ? ((stats.orderBreakdown.delivered / stats.totalOrders) * 100).toFixed(1) : '0'}%</p>
+              <p className="text-sm text-gray-600">Delivery Rate</p>
+            </div>
+            <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <p className="text-2xl font-bold text-purple-600">{stats.userBreakdown.sellers}</p>
+              <p className="text-sm text-gray-600">Active Sellers</p>
+            </div>
           </div>
         </CardContent>
       </Card>

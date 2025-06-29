@@ -26,53 +26,96 @@ interface AdminStats {
   totalProducts: number;
   totalOrders: number;
   totalRevenue: number;
-  pendingReviews: number;
-  activeDisputes: number;
-  onlineUsers: number;
+  activeProducts: number;
+  totalReviews: number;
   todaySignups: number;
+  weeklySignups: number;
+  monthlyRevenue: number;
+  revenueGrowth: number;
+  lowStockProducts: number;
+  orderBreakdown: {
+    pending: number;
+    shipped: number;
+    delivered: number;
+    cancelled: number;
+  };
+  userBreakdown: {
+    buyers: number;
+    sellers: number;
+    drivers: number;
+    admins: number;
+  };
+  averageOrderValue: number;
+  recentOrders: Array<{
+    id: string;
+    status: string;
+    amount: number;
+    customerName: string;
+    customerEmail: string;
+    createdAt: string;
+  }>;
+  recentUsers: Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    isActive: boolean;
+    createdAt: string;
+  }>;
+  topSellingProducts: Array<{
+    id: string;
+    name: string;
+    price: number;
+    imageUrl: string;
+    category: { name: string };
+    totalSold: number;
+    orderCount: number;
+  }>;
+  insights: {
+    conversionRate: number;
+    repeatCustomerRate: number;
+    customerSatisfaction: number;
+    platformGrowth: string;
+  };
 }
 
 export default function AdminOverview() {
-  const [stats, setStats] = useState<AdminStats>({
-    totalUsers: 0,
-    totalProducts: 0,
-    totalOrders: 0,
-    totalRevenue: 0,
-    pendingReviews: 0,
-    activeDisputes: 0,
-    onlineUsers: 0,
-    todaySignups: 0
-  });
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Replace with real API call
-    // fetchAdminStats();
-    
-    // Mock data for development
-    setTimeout(() => {
-      setStats({
-        totalUsers: 15847,
-        totalProducts: 8542,
-        totalOrders: 23156,
-        totalRevenue: 1234567.89,
-        pendingReviews: 47,
-        activeDisputes: 12,
-        onlineUsers: 342,
-        todaySignups: 28
-      });
-      setLoading(false);
-    }, 1000);
+    fetchAdminStats();
   }, []);
 
-  const statCards = [
+  const fetchAdminStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/dashboard/admin/stats');
+      if (!response.ok) {
+        throw new Error('Failed to fetch admin stats');
+      }
+      
+      const data = await response.json();
+      setStats(data);
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+      setError('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statCards = stats ? [
     {
       title: "Total Users",
       value: stats.totalUsers.toLocaleString(),
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
-      change: "+12.5%",
+      change: `${stats.weeklySignups} this week`,
       changeType: "positive" as const
     },
     {
@@ -81,7 +124,7 @@ export default function AdminOverview() {
       icon: Package,
       color: "text-green-600",
       bgColor: "bg-green-50",
-      change: "+8.2%",
+      change: `${stats.activeProducts} active`,
       changeType: "positive" as const
     },
     {
@@ -90,42 +133,43 @@ export default function AdminOverview() {
       icon: Truck,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
-      change: "+23.1%",
-      changeType: "positive" as const
+      change: `${stats.orderBreakdown.pending} pending`,
+      changeType: "neutral" as const
     },
     {
       title: "Total Revenue",
       value: `$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
       icon: DollarSign,
       color: "text-yellow-600",
-      bgColor: "bg-yellow-50",      change: "+18.7%",
-      changeType: "positive" as const
+      bgColor: "bg-yellow-50",
+      change: `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth}%`,
+      changeType: stats.revenueGrowth > 0 ? "positive" : stats.revenueGrowth < 0 ? "negative" : "neutral" as const
     },
     {
-      title: "Pending Reviews",
-      value: stats.pendingReviews.toString(),
+      title: "Total Reviews",
+      value: stats.totalReviews.toString(),
       icon: MessageSquare,
       color: "text-orange-600",
       bgColor: "bg-orange-50",
-      change: "+5",
+      change: "Quality feedback",
       changeType: "neutral" as const
     },
     {
-      title: "Active Disputes",
-      value: stats.activeDisputes.toString(),
+      title: "Low Stock Alert",
+      value: stats.lowStockProducts.toString(),
       icon: AlertTriangle,
       color: "text-red-600",
       bgColor: "bg-red-50",
-      change: "-2",
-      changeType: "positive" as const
+      change: "Products < 10",
+      changeType: stats.lowStockProducts > 0 ? "negative" : "positive" as const
     },
     {
-      title: "Online Users",
-      value: stats.onlineUsers.toString(),
-      icon: Activity,
+      title: "Average Order",
+      value: `$${stats.averageOrderValue.toFixed(2)}`,
+      icon: BarChart3,
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",
-      change: "Live",
+      change: "Per order",
       changeType: "neutral" as const
     },
     {
@@ -134,10 +178,10 @@ export default function AdminOverview() {
       icon: UserCheck,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",
-      change: "+15",
+      change: "New users",
       changeType: "positive" as const
     }
-  ];
+  ] : [];
 
   if (loading) {
     return (
@@ -151,6 +195,40 @@ export default function AdminOverview() {
             </Card>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <p className="text-red-600 font-medium">Error loading dashboard data</p>
+            </div>
+            <p className="text-red-500 text-sm mt-2">{error}</p>
+            <button 
+              onClick={fetchAdminStats}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-gray-500">No data available</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -191,14 +269,14 @@ export default function AdminOverview() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Platform Analytics */}
-        <PlatformStats />
+        <PlatformStats stats={stats} />
         
         {/* Recent Activity */}
-        <RecentActivity />
+        <RecentActivity recentOrders={stats.recentOrders} recentUsers={stats.recentUsers} />
       </div>
 
       {/* User Management Section */}
-      <UserManagement />
+      <UserManagement recentUsers={stats.recentUsers} userBreakdown={stats.userBreakdown} />
     </div>
   );
 }

@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
+    "build:with-prisma": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "devtools": "react-devtools",

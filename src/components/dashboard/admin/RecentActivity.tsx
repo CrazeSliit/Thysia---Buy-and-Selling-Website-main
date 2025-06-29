@@ -13,6 +13,25 @@ import {
   TrendingUp
 } from "lucide-react";
 
+interface RecentActivityProps {
+  recentOrders: Array<{
+    id: string;
+    status: string;
+    amount: number;
+    customerName: string;
+    customerEmail: string;
+    createdAt: string;
+  }>;
+  recentUsers: Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    isActive: boolean;
+    createdAt: string;
+  }>;
+}
+
 interface ActivityItem {
   id: string;
   type: 'user' | 'order' | 'payment' | 'support' | 'security' | 'system' | 'product' | 'review';
@@ -22,77 +41,8 @@ interface ActivityItem {
   severity?: 'low' | 'medium' | 'high' | 'critical';
   userId?: string;
   userName?: string;
+  amount?: number;
 }
-
-// Mock activity data
-const recentActivities: ActivityItem[] = [
-  {
-    id: '1',
-    type: 'security',
-    title: 'Suspicious Login Detected',
-    description: 'Multiple failed login attempts from IP 192.168.1.100',
-    timestamp: new Date(Date.now() - 5 * 60 * 1000),
-    severity: 'high'
-  },
-  {
-    id: '2',
-    type: 'user',
-    title: 'New User Registration',
-    description: 'Sarah Johnson joined the platform',
-    timestamp: new Date(Date.now() - 15 * 60 * 1000),
-    severity: 'low',
-    userId: 'user-123',
-    userName: 'Sarah Johnson'
-  },
-  {
-    id: '3',
-    type: 'payment',
-    title: 'High-Value Transaction',
-    description: 'Order #ORD-2024-001 processed for $5,250',
-    timestamp: new Date(Date.now() - 30 * 60 * 1000),
-    severity: 'medium'
-  },
-  {
-    id: '4',
-    type: 'support',
-    title: 'New Support Ticket',
-    description: 'Customer reported payment issue - Ticket #SUP-456',
-    timestamp: new Date(Date.now() - 45 * 60 * 1000),
-    severity: 'medium'
-  },
-  {
-    id: '5',
-    type: 'product',
-    title: 'Product Review Flagged',
-    description: 'Review for "Premium Headphones" flagged for inappropriate content',
-    timestamp: new Date(Date.now() - 60 * 60 * 1000),
-    severity: 'medium'
-  },
-  {
-    id: '6',
-    type: 'system',
-    title: 'Database Backup Completed',
-    description: 'Daily backup completed successfully at 02:00 AM',
-    timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000),
-    severity: 'low'
-  },
-  {
-    id: '7',
-    type: 'order',
-    title: 'Bulk Order Placed',
-    description: 'Corporate client placed order for 500+ items',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    severity: 'low'
-  },
-  {
-    id: '8',
-    type: 'user',
-    title: 'Seller Account Suspended',
-    description: 'Account "TechWorld Store" suspended due to policy violations',
-    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
-    severity: 'high'
-  }
-];
 
 const getActivityIcon = (type: ActivityItem['type']) => {
   switch (type) {
@@ -131,61 +81,124 @@ const getSeverityColor = (severity?: string) => {
   }
 };
 
-export default function RecentActivity() {
+const getStatusColor = (status: string) => {
+  switch (status.toLowerCase()) {
+    case 'delivered':
+      return 'bg-green-100 text-green-800';
+    case 'shipped':
+      return 'bg-blue-100 text-blue-800';
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'cancelled':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
+export default function RecentActivity({ recentOrders, recentUsers }: RecentActivityProps) {
+  // Convert API data to activity items
+  const activities: ActivityItem[] = [
+    // Convert recent orders to activities
+    ...recentOrders.slice(0, 5).map(order => ({
+      id: order.id,
+      type: 'order' as const,
+      title: 'New Order Placed',
+      description: `Order #${order.id.slice(-6)} by ${order.customerName} - $${order.amount.toFixed(2)}`,
+      timestamp: new Date(order.createdAt),
+      severity: order.amount > 500 ? 'high' as const : 'medium' as const,
+      userName: order.customerName,
+      amount: order.amount
+    })),
+    // Convert recent users to activities
+    ...recentUsers.slice(0, 3).map(user => ({
+      id: user.id,
+      type: 'user' as const,
+      title: 'New User Registration',
+      description: `${user.name} joined as ${user.role.toLowerCase()}`,
+      timestamp: new Date(user.createdAt),
+      severity: 'low' as const,
+      userId: user.id,
+      userName: user.name
+    }))
+  ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 8);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg font-semibold flex items-center justify-between">
           Recent Activity
-          <button className="text-sm text-blue-600 hover:text-blue-800 font-normal">
-            View All
-          </button>
+          <span className="text-sm text-gray-500 font-normal">
+            Last 24 hours
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {recentActivities.map((activity) => {
-            const Icon = getActivityIcon(activity.type);
-            const severityClasses = getSeverityColor(activity.severity);
-
-            return (
-              <div
-                key={activity.id}
-                className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-gray-50 transition-colors"
-              >
-                <div className={`p-2 rounded-full ${severityClasses}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {activity.title}
-                    </p>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      activity.severity === 'critical' ? 'bg-red-100 text-red-800' :
-                      activity.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                      activity.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {activity.severity || 'low'}
-                    </span>
+          {activities.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>No recent activity</p>
+            </div>
+          ) : (
+            activities.map((activity) => {
+              const Icon = getActivityIcon(activity.type);
+              const severityClasses = getSeverityColor(activity.severity);
+              
+              return (
+                <div 
+                  key={activity.id} 
+                  className={`flex items-start space-x-3 p-3 rounded-lg border ${severityClasses}`}
+                >
+                  <div className="flex-shrink-0">
+                    <div className="p-2 rounded-full bg-white">
+                      <Icon className="h-4 w-4" />
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {activity.description}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {activity.title}
+                      </p>
+                      <p className="text-xs text-gray-500 flex-shrink-0">
+                        {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
+                      </p>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {activity.description}
+                    </p>
+                    {activity.type === 'order' && activity.amount && (
+                      <div className="flex items-center justify-between mt-2">
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor('pending')}`}>
+                          Processing
+                        </span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          ${activity.amount.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    {activity.type === 'user' && (
+                      <div className="mt-2">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                          {activity.description.includes('buyer') ? 'Buyer' : 
+                           activity.description.includes('seller') ? 'Seller' :
+                           activity.description.includes('driver') ? 'Driver' : 'User'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-        
-        <div className="mt-4 pt-4 border-t">
-          <button className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium">
-            Load More Activities
-          </button>
+              );
+            })
+          )}
+          
+          {activities.length > 0 && (
+            <div className="pt-4 border-t">
+              <button className="w-full text-sm text-blue-600 hover:text-blue-800 font-medium">
+                View All Activity
+              </button>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
