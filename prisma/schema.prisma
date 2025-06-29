@@ -10,15 +10,23 @@ datasource db {
 
 // User model
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  email     String   @unique
-  name      String?
-  password  String?
-  role      UserRole @default(BUYER)
-  isActive  Boolean  @default(true)
-  image     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  email       String     @unique
+  name        String?
+  password    String?
+  role        UserRole   @default(BUYER)
+  status      UserStatus @default(ACTIVE)
+  isActive    Boolean    @default(true)
+  image       String?
+  phone       String?
+  lastLoginAt DateTime?
+  loginCount  Int        @default(0)
+  suspendedAt DateTime?
+  suspendedBy String?    @db.ObjectId
+  banReason   String?
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   // Profile relations
   buyerProfile  BuyerProfile?
@@ -41,6 +49,14 @@ enum UserRole {
   SELLER
   DRIVER
   ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+  BANNED
+  DEACTIVATED
 }
 
 // Buyer profile

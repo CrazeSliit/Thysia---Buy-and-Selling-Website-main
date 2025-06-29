@@ -16,9 +16,13 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  Unlock,
+  Trash2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import UserDetailModal from "./UserDetailModal";
+import AddUserModal from "./AddUserModal";
 
 interface User {
   id: string;
@@ -26,6 +30,7 @@ interface User {
   email: string;
   role: 'BUYER' | 'SELLER' | 'DRIVER' | 'ADMIN';
   status: 'ACTIVE' | 'SUSPENDED' | 'PENDING' | 'BANNED';
+  isActive: boolean;
   joinedAt: Date;
   lastLogin: Date | null;
   orders: number;
@@ -51,6 +56,12 @@ export default function AdminUserManagement() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  
+  // Modal states
+  const [showUserDetail, setShowUserDetail] = useState(false);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -85,23 +96,109 @@ export default function AdminUserManagement() {
   const handleBulkAction = async (action: string) => {
     if (selectedUsers.length === 0) return;
     
-    // TODO: Implement bulk actions
-    console.log(`Bulk action ${action} for users:`, selectedUsers);
+    try {
+      setBulkActionLoading(true);
+      const response = await fetch('/api/dashboard/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userIds: selectedUsers, 
+          action: `bulk${action.charAt(0).toUpperCase() + action.slice(1)}` 
+        })
+      });
+
+      if (response.ok) {
+        setSelectedUsers([]);
+        fetchUsers();
+      }
+    } catch (error) {
+      console.error(`Error performing bulk ${action}:`, error);
+    } finally {
+      setBulkActionLoading(false);
+    }
   };
 
   const handleUserAction = async (userId: string, action: string) => {
     try {
-      const response = await fetch('/api/dashboard/admin/users', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, action })
-      });
+      switch (action) {
+        case 'view':
+          setSelectedUserId(userId);
+          setShowUserDetail(true);
+          break;
+          
+        case 'edit':
+          setSelectedUserId(userId);
+          setShowUserDetail(true);
+          break;
 
-      if (response.ok) {
-        fetchUsers(); // Refresh the list
+        case 'suspend':
+        case 'activate':
+        case 'toggleActive':
+          const response = await fetch('/api/dashboard/admin/users', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, action })
+          });
+
+          if (response.ok) {
+            fetchUsers();
+          }
+          break;
+
+        case 'message':
+          // TODO: Implement messaging system
+          console.log(`Send message to user ${userId}`);
+          break;
+
+        case 'promote':
+          // TODO: Implement role change dialog
+          console.log(`Change role for user ${userId}`);
+          break;
+
+        default:
+          console.log(`Unknown action: ${action}`);
       }
     } catch (error) {
       console.error(`Error performing ${action}:`, error);
+    }
+  };
+
+  const handleExport = async (format: 'json' | 'csv' = 'csv') => {
+    try {
+      const queryParams = new URLSearchParams({
+        format,
+        ...(filters.role !== 'ALL' && { role: filters.role }),
+        ...(filters.status !== 'ALL' && { status: filters.status }),
+      });
+
+      const response = await fetch(`/api/admin/users/export?${queryParams}`);
+      
+      if (response.ok) {
+        if (format === 'csv') {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+        } else {
+          const data = await response.json();
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `users_export_${new Date().toISOString().split('T')[0]}.json`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+        }
+      }
+    } catch (error) {
+      console.error('Error exporting users:', error);
     }
   };
 
@@ -155,6 +252,7 @@ export default function AdminUserManagement() {
       email: 'john@example.com',
       role: 'BUYER',
       status: 'ACTIVE',
+      isActive: true,
       joinedAt: new Date('2024-01-15'),
       lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000),
       orders: 23
@@ -165,6 +263,7 @@ export default function AdminUserManagement() {
       email: 'contact@techworld.com',
       role: 'SELLER',
       status: 'SUSPENDED',
+      isActive: false,
       joinedAt: new Date('2023-11-20'),
       lastLogin: new Date(Date.now() - 24 * 60 * 60 * 1000),
       orders: 156,
@@ -176,6 +275,7 @@ export default function AdminUserManagement() {
       email: 'mike.driver@example.com',
       role: 'DRIVER',
       status: 'ACTIVE',
+      isActive: true,
       joinedAt: new Date('2024-02-01'),
       lastLogin: new Date(Date.now() - 30 * 60 * 1000),
       orders: 89
@@ -312,22 +412,40 @@ export default function AdminUserManagement() {
               {selectedUsers.length > 0 && (
                 <div className="flex gap-2">
                   <button
+                    onClick={() => handleBulkAction('activate')}
+                    disabled={bulkActionLoading}
+                    className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm disabled:opacity-50"
+                  >
+                    Activate Selected
+                  </button>
+                  <button
                     onClick={() => handleBulkAction('suspend')}
-                    className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm"
+                    disabled={bulkActionLoading}
+                    className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm disabled:opacity-50"
                   >
                     Suspend Selected
                   </button>
                   <button
-                    onClick={() => handleBulkAction('activate')}
-                    className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                    onClick={() => handleBulkAction('delete')}
+                    disabled={bulkActionLoading}
+                    className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm disabled:opacity-50"
                   >
-                    Activate Selected
+                    Delete Selected
                   </button>
                 </div>
               )}
-              <button className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm flex items-center gap-2">
+              <button 
+                onClick={() => handleExport('csv')}
+                className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm flex items-center gap-2"
+              >
                 <Download className="h-4 w-4" />
-                Export
+                Export CSV
+              </button>
+              <button 
+                onClick={() => handleExport('json')}
+                className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+              >
+                Export JSON
               </button>
             </div>
           </div>
@@ -449,7 +567,7 @@ export default function AdminUserManagement() {
                           >
                             <Mail className="h-4 w-4" />
                           </button>
-                          {user.status === 'ACTIVE' && (
+                          {user.isActive ? (
                             <button
                               onClick={() => handleUserAction(user.id, 'suspend')}
                               className="p-1 text-gray-400 hover:text-red-600"
@@ -457,15 +575,32 @@ export default function AdminUserManagement() {
                             >
                               <Ban className="h-4 w-4" />
                             </button>
+                          ) : (
+                            <button
+                              onClick={() => handleUserAction(user.id, 'activate')}
+                              className="p-1 text-gray-400 hover:text-green-600"
+                              title="Activate User"
+                            >
+                              <Unlock className="h-4 w-4" />
+                            </button>
                           )}
                           {user.role !== 'ADMIN' && (
-                            <button
-                              onClick={() => handleUserAction(user.id, 'promote')}
-                              className="p-1 text-gray-400 hover:text-indigo-600"
-                              title="Change Role"
-                            >
-                              <Shield className="h-4 w-4" />
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleUserAction(user.id, 'promote')}
+                                className="p-1 text-gray-400 hover:text-indigo-600"
+                                title="Change Role"
+                              >
+                                <Shield className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleUserAction(user.id, 'delete')}
+                                className="p-1 text-gray-400 hover:text-red-600"
+                                title="Delete User"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -509,6 +644,23 @@ export default function AdminUserManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modals */}
+      <UserDetailModal
+        userId={selectedUserId || ''}
+        isOpen={showUserDetail}
+        onClose={() => {
+          setShowUserDetail(false);
+          setSelectedUserId(null);
+        }}
+        onUserUpdate={fetchUsers}
+      />
+
+      <AddUserModal
+        isOpen={showAddUser}
+        onClose={() => setShowAddUser(false)}
+        onUserAdded={fetchUsers}
+      />
     </div>
   );
 }

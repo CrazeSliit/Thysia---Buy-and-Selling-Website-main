@@ -55,10 +55,7 @@ const navigationConfig = {
     { href: '/dashboard/admin/users', label: 'Users', icon: User },
     { href: '/dashboard/admin/products', label: 'Products', icon: Package },
     { href: '/dashboard/admin/orders', label: 'Orders', icon: ShoppingBag },
-    { href: '/dashboard/admin/categories', label: 'Categories', icon: Settings },
     { href: '/dashboard/admin/shipments', label: 'Shipments', icon: Truck },
-    { href: '/dashboard/admin/reports', label: 'Reports', icon: Star },
-    { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings },
   ],
 }
 

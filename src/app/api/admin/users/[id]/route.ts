@@ -7,7 +7,12 @@ import { z } from 'zod'
 // Validation schema for user update
 const userUpdateSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255, 'Name too long').optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
   role: z.enum(['BUYER', 'SELLER', 'DRIVER', 'ADMIN']).optional(),
+  status: z.enum(['ACTIVE', 'PENDING', 'SUSPENDED', 'BANNED', 'DEACTIVATED']).optional(),
+  notes: z.string().optional(),
+  banReason: z.string().optional(),
   isActive: z.boolean().optional(),
 })
 
@@ -33,10 +38,11 @@ export async function GET(
         buyerProfile: {
           include: {
             addresses: true,
-            cartItems: {
+            wishlists: {
               include: {
                 product: {
                   select: {
+                    id: true,
                     name: true,
                     price: true
                   }
@@ -46,9 +52,8 @@ export async function GET(
             _count: {
               select: {
                 addresses: true,
-                cartItems: true,
                 orders: true,
-                reviews: true
+                wishlists: true
               }
             }
           }
@@ -65,11 +70,12 @@ export async function GET(
                 createdAt: true,
                 _count: {
                   select: {
-                    orderItems: true,
-                    reviews: true
+                    orderItems: true
                   }
                 }
-              }
+              },
+              take: 10,
+              orderBy: { createdAt: 'desc' }
             },
             _count: {
               select: {
@@ -85,20 +91,27 @@ export async function GET(
             status: true,
             totalAmount: true,
             createdAt: true
-          }
+          },
+          take: 10,
+          orderBy: { createdAt: 'desc' }
         },
         notifications: {
           select: {
             id: true,
-            title: true,
+            type: true,
+            message: true,
             isRead: true,
             createdAt: true
-          }
+          },
+          take: 5,
+          orderBy: { createdAt: 'desc' }
         },
         _count: {
           select: {
             orders: true,
-            notifications: true
+            notifications: true,
+            messagesSent: true,
+            messagesReceived: true
           }
         }
       }
@@ -108,12 +121,29 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // Calculate additional statistics
+    const orderStats = await prisma.order.groupBy({
+      by: ['status'],
+      where: { buyerId: user.id },
+      _count: { status: true }
+    })
+
+    const totalSpent = await prisma.order.aggregate({
+      where: { 
+        buyerId: user.id,
+        status: 'DELIVERED'
+      },
+      _sum: { totalAmount: true }
+    })
+
     return NextResponse.json({
       user: {
         ...user,
-        password: undefined, // Don't return password
-        createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString(),
+        password: undefined,
+        stats: {
+          ordersByStatus: orderStats,
+          totalSpent: totalSpent._sum.totalAmount || 0
+        }
       }
     })
   } catch (error) {
