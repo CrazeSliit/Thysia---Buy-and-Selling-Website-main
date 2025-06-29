@@ -1,7 +1,9 @@
 export interface Address {
   id: string
   buyerId: string
+  type: 'HOME' | 'WORK' | 'OTHER'
   fullName: string
+  company?: string
   phone: string
   street: string
   city: string
@@ -14,6 +16,7 @@ export interface Address {
 }
 
 export interface CreateAddressRequest {
+  type: 'HOME' | 'WORK' | 'OTHER'
   firstName: string
   lastName: string
   company?: string
@@ -32,9 +35,10 @@ export interface UpdateAddressRequest extends CreateAddressRequest {
 }
 
 export interface AddressFormData {
+  type: 'HOME' | 'WORK' | 'OTHER'
   firstName: string
   lastName: string
-  company: string
+  company?: string
   address1: string
   address2: string
   city: string

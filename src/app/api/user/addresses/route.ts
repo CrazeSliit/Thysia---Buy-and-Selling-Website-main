@@ -99,7 +99,9 @@ export async function POST(request: NextRequest) {
     const address = await prisma.address.create({
       data: {
         buyerId: buyerProfile.id,
+        type: validatedData.type,
         fullName: `${validatedData.firstName} ${validatedData.lastName}`,
+        company: validatedData.company || '',
         phone: validatedData.phone || '',
         street: validatedData.address1 + (validatedData.address2 ? `, ${validatedData.address2}` : ''),
         city: validatedData.city,

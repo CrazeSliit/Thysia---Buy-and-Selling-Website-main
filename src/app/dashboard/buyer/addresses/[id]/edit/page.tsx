@@ -31,6 +31,8 @@ async function getAddress(addressId: string, userId: string): Promise<Address | 
     }    // Convert dates to strings for serialization
     return {
       ...address,
+      type: address.type as 'HOME' | 'WORK' | 'OTHER',
+      company: address.company || undefined, // Convert null to undefined
       createdAt: address.createdAt.toISOString(),
       updatedAt: address.updatedAt.toISOString(),
     }
@@ -56,6 +58,9 @@ export default async function EditAddressPage({ params }: EditAddressPageProps) 
   if (!address) {
     notFound()
   }
+
+  // Debug: Log the address data structure
+  console.log('Address data for editing:', address)
 
   return (
     <DashboardLayout userRole="BUYER">

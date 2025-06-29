@@ -99,7 +99,9 @@ model Address {
   buyerId   String       @db.ObjectId
   buyer     BuyerProfile @relation(fields: [buyerId], references: [id], onDelete: Cascade)
 
+  type      String       @default("HOME") // HOME, WORK, OTHER
   fullName  String
+  company   String?      // Optional company field
   phone     String
   street    String
   city      String

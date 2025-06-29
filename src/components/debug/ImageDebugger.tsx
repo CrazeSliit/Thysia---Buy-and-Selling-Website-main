@@ -8,6 +8,8 @@ export default function ImageDebugger() {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResults, setTestResults] = useState<any>(null)
+  const [converting, setConverting] = useState(false)
+  const [convertResults, setConvertResults] = useState<any>(null)
 
   const testImageUrl = async (url: string) => {
     if (!url.trim()) return

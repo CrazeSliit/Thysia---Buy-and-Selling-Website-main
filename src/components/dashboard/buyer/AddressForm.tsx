@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AddressFormData, Address } from '@/types/address'
 import { MapPin, Building, Home, Briefcase } from 'lucide-react'
@@ -31,19 +31,59 @@ export default function AddressForm({ address, isEditing = false, onSubmit, onCa
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const [formData, setFormData] = useState<AddressFormData>({
-    firstName: '', // We'll need to parse this from fullName if address exists
-    lastName: '', // We'll need to parse this from fullName if address exists
-    company: '',
-    address1: '', // We'll need to parse this from street if address exists
-    address2: '',
-    city: address?.city || '',
-    state: address?.state || '',
-    zipCode: address?.zipCode || '',
-    country: address?.country || 'US',
-    phone: address?.phone || '',
-    isDefault: address?.isDefault || false,
-  })
+  // Parse existing address data for editing
+  const parseAddressData = (address: Address | undefined): AddressFormData => {
+    if (!address) {
+      return {
+        type: 'HOME',
+        firstName: '',
+        lastName: '',
+        company: '',
+        address1: '',
+        address2: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: 'US',
+        phone: '',
+        isDefault: false,
+      }
+    }
+
+    // Parse fullName into first and last name
+    const nameParts = address.fullName.trim().split(' ')
+    const firstName = nameParts[0] || ''
+    const lastName = nameParts.slice(1).join(' ') || ''
+
+    // Parse street into address1 and address2
+    const streetParts = address.street.split(',').map(part => part.trim())
+    const address1 = streetParts[0] || ''
+    const address2 = streetParts.slice(1).join(', ') || ''
+
+    return {
+      type: address.type || 'HOME',
+      firstName,
+      lastName,
+      company: address.company || '', // Now stored in database
+      address1,
+      address2,
+      city: address.city,
+      state: address.state,
+      zipCode: address.zipCode,
+      country: address.country,
+      phone: address.phone,
+      isDefault: address.isDefault,
+    }
+  }
+
+  const [formData, setFormData] = useState<AddressFormData>(parseAddressData(address))
+
+  // Update form data when address prop changes (for async loading)
+  useEffect(() => {
+    console.log('AddressForm received address:', address)
+    console.log('Parsed form data:', parseAddressData(address))
+    setFormData(parseAddressData(address))
+  }, [address])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -106,6 +146,38 @@ export default function AddressForm({ address, isEditing = false, onSubmit, onCa
             {error}
           </div>
         )}
+
+        {/* Address Type */}
+        <div>
+          <label htmlFor="type" className="block text-sm font-medium text-secondary-700 mb-3">
+            Address Type *
+          </label>
+          <div className="grid grid-cols-3 gap-4">
+            {ADDRESS_TYPES.map(({ value, label, icon: Icon }) => (
+              <label
+                key={value}
+                className={`
+                  flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all
+                  ${formData.type === value 
+                    ? 'border-primary-500 bg-primary-50 text-primary-700' 
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  }
+                `}
+              >
+                <input
+                  type="radio"
+                  name="type"
+                  value={value}
+                  checked={formData.type === value}
+                  onChange={handleInputChange}
+                  className="sr-only"
+                />
+                <Icon className="w-6 h-6 mb-2" />
+                <span className="text-sm font-medium">{label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
 
         {/* Name Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

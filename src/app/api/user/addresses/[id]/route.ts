@@ -99,7 +99,18 @@ export async function PUT(
     // Update the address
     const updatedAddress = await prisma.address.update({
       where: { id: params.id },
-      data: validatedData
+      data: {
+        type: validatedData.type,
+        fullName: `${validatedData.firstName} ${validatedData.lastName}`,
+        company: validatedData.company || '',
+        phone: validatedData.phone || '',
+        street: validatedData.address1 + (validatedData.address2 ? `, ${validatedData.address2}` : ''),
+        city: validatedData.city,
+        state: validatedData.state,
+        zipCode: validatedData.zipCode,
+        country: validatedData.country,
+        isDefault: validatedData.isDefault || false
+      }
     })
 
     return NextResponse.json({ 

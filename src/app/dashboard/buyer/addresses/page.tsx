@@ -31,6 +31,8 @@ async function getBuyerAddresses(userId: string): Promise<Address[]> {
     })    // Convert dates to strings for serialization
     return addresses.map(address => ({
       ...address,
+      type: address.type as 'HOME' | 'WORK' | 'OTHER',
+      company: address.company || undefined, // Convert null to undefined
       createdAt: address.createdAt.toISOString(),
       updatedAt: address.updatedAt.toISOString(),
     }))
